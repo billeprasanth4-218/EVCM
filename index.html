@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123c35">
+<title>EV ChargeMate</title>
+<style>
+:root{--green:#147a58;--dark:#123c35;--mint:#eaf5ef;--bg:#f3f6f5;--muted:#63736d;--line:#dce5e0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#18352e;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+main{max-width:520px;margin:auto;padding:16px 14px 36px}
+header{background:linear-gradient(135deg,#123c35,#20785a);color:white;border-radius:22px;padding:22px;margin-bottom:16px;box-shadow:0 8px 24px #123c351c}
+.brand{display:flex;align-items:center;gap:12px}.logo{font-size:28px;background:#ffffff20;border-radius:14px;padding:10px}
+h1{font-size:23px;margin:0}header p{margin:5px 0 0;color:#d5e9df;font-size:13px}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 4px 14px #173c2f08}
+h2{font-size:17px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+input{width:100%;padding:12px;border:1px solid #cbd8d1;border-radius:10px;font:inherit;font-size:16px;background:#fff;color:#18352e}
+input:focus{outline:2px solid #8fcdb0;border-color:var(--green)}
+.full{margin-top:12px}
+button{border:0;border-radius:12px;background:var(--green);color:white;padding:14px 16px;font-size:15px;font-weight:700;width:100%;cursor:pointer}
+button:active{transform:scale(.99)}
+.secondary{background:#e8f2ed;color:var(--dark)}
+.hint{font-size:12px;color:var(--muted);line-height:1.5}
+.error{color:#b42318;font-size:13px;min-height:18px;margin:8px 0 0}
+.hero-result{background:var(--mint);border-radius:14px;padding:15px;margin-bottom:12px}
+.hero-result span{font-size:12px;color:#4c6c5e}.hero-result strong{display:block;font-size:30px;margin-top:3px;color:var(--dark)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#f7faf8;border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat span{display:block;font-size:12px;color:var(--muted)}.stat strong{font-size:17px;display:block;margin-top:5px;overflow-wrap:anywhere}
+.battery-wrap{display:flex;align-items:center;gap:12px;margin-top:15px}
+.battery{height:23px;border:2px solid #4b7462;border-radius:6px;padding:2px;flex:1;position:relative}
+.battery:after{content:"";position:absolute;right:-6px;top:5px;width:4px;height:9px;background:#4b7462;border-radius:0 2px 2px 0}
+.fill{height:100%;background:#20a36c;border-radius:3px;width:60%;transition:width .25s}
+.tabs{display:flex;gap:8px;margin-bottom:14px}.tabs button{width:auto;flex:1;padding:10px;font-size:13px}
+.tabs button.active{background:var(--dark);color:white}
+.hidden{display:none!important}
+.history-item{border-bottom:1px solid var(--line);padding:10px 0;font-size:13px;display:flex;justify-content:space-between;gap:8px}
+.history-item:last-child{border:0}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 12px 0;line-height:1.6}
+@media(max-width:360px){.grid{grid-template-columns:1fr}h1{font-size:21px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+ <div class="brand"><div class="logo">⚡</div><div><h1>EV ChargeMate</h1><p>EV charging cost calculator & simulator</p></div></div>
+</header>
+
+<div class="tabs">
+ <button id="tabCalc" class="active" type="button">Calculator</button>
+ <button id="tabHistory" class="secondary" type="button">History</button>
+</div>
+
+<section id="calculator">
+ <div class="card">
+  <h2>🔋 Charging details</h2>
+  <div class="grid">
+   <div><label for="capacity">Battery capacity (kWh)</label><input id="capacity" type="number" min="0.01" step="any" value="40"></div>
+   <div><label for="tariff">Tariff (₹ / kWh)</label><input id="tariff" type="number" min="0" step="any" value="8"></div>
+   <div><label for="start">Current charge (%)</label><input id="start" type="number" min="0" max="100" step="any" value="20"></div>
+   <div><label for="target">Target charge (%)</label><input id="target" type="number" min="0" max="100" step="any" value="80"></div>
+   <div><label for="power">Charger power (kW)</label><input id="power" type="number" min="0.01" step="any" value="7.2"></div>
+   <div><label for="efficiency">Charging efficiency (%)</label><input id="efficiency" type="number" min="0.01" max="100" step="any" value="90"></div>
+  </div>
+  <p class="error" id="error" role="alert"></p>
+  <button id="calculate" type="button">Calculate charging cost</button>
+  <p class="hint">Estimates assume constant charger power and efficiency. Actual charging time can vary by vehicle and charger.</p>
+ </div>
+
+ <div class="card">
+  <h2>📊 Your estimate</h2>
+  <div class="hero-result"><span>Estimated charging cost</span><strong id="cost">₹213.33</strong></div>
+  <div class="stats">
+   <div class="stat"><span>Battery energy needed</span><strong id="batteryEnergy">24.00 kWh</strong></div>
+   <div class="stat"><span>Energy from grid</span><strong id="gridEnergy">26.67 kWh</strong></div>
+   <div class="stat"><span>Estimated duration</span><strong id="duration">3 h 42 min</strong></div>
+   <div class="stat"><span>Charge increase</span><strong id="increase">60%</strong></div>
+  </div>
+  <div class="battery-wrap"><div class="battery"><div class="fill" id="batteryFill"></div></div><strong id="batteryLabel">80% target</strong></div>
+ </div>
+ <div class="card">
+  <h2>🧮 How it is calculated</h2>
+  <p class="hint">Battery energy = capacity × (target % − current %) ÷ 100</p>
+  <p class="hint">Grid energy = battery energy ÷ efficiency</p>
+  <p class="hint">Cost = grid energy × tariff</p>
+  <p class="hint">Time = battery energy ÷ (charger power × efficiency)</p>
+ </div>
+</section>
+
+<section id="historySection" class="hidden">
+ <div class="card">
+  <h2>🕘 Saved estimates</h2>
+  <p class="hint">Estimates are saved on this device in this browser only.</p>
+  <div id="historyList"><p class="hint">No saved estimates yet. Calculate a session and tap Save estimate.</p></div>
+  <button id="clearHistory" class="secondary" type="button" style="margin-top:12px">Clear history</button>
+ </div>
+</section>
+<footer>Student project demo · No real charger connection · Estimates only</footer>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let lastEstimate = null;
+function compute(){
+ const ids=['capacity','start','target','tariff','power','efficiency'];
+ const raw=ids.map(id=>$(id).value.trim());
+ const v=raw.map(Number);
+ const [capacity,start,target,tariff,power,efficiency]=v;
+ $('error').textContent='';
+ if(raw.some(x=>x==='')||v.some(x=>!Number.isFinite(x))){
+  $('error').textContent='Please enter valid numbers in every field.';return;
+ }
+ if(capacity<=0||start<0||start>100||target<start||target>100||tariff<0||power<=0||efficiency<=0||efficiency>100){
+  $('error').textContent='Check values: capacity and power must be positive; percentages must be 0–100; target must be at least current charge; tariff cannot be negative.';return;
+ }
+ const eta=efficiency/100;
+ const battery=capacity*(target-start)/100;
+ const grid=battery/eta;
+ const cost=grid*tariff;
+ const hours=battery/(power*eta);
+ if(![battery,grid,cost,hours].every(Number.isFinite)){
+  $('error').textContent='These values are too large to calculate.';return;
+ }
+ const totalMinutes=Math.round(hours*60);
+ const h=Math.floor(totalMinutes/60), m=totalMinutes%60;
+ $('cost').textContent='₹'+cost.toFixed(2);
+ $('batteryEnergy').textContent=battery.toFixed(2)+' kWh';
+ $('gridEnergy').textContent=grid.toFixed(2)+' kWh';
+ $('duration').textContent=h+' h '+m+' min';
+ $('increase').textContent=(target-start).toFixed(1).replace(/\.0$/,'')+'%';
+ $('batteryFill').style.width=target+'%';
+ $('batteryLabel').textContent=target+'% target';
+ lastEstimate={date:new Date().toLocaleString(),capacity,start,target,tariff,power,efficiency,battery,grid,cost,hours};
+}
+function getHistory(){try{return JSON.parse(localStorage.getItem('evcm-history')||'[]')}catch(e){return []}}
+function saveEstimate(){
+ if(!lastEstimate) compute();
+ if(!lastEstimate||$('error').textContent) return;
+ const history=getHistory();
+ history.unshift(lastEstimate);
+ try{localStorage.setItem('evcm-history',JSON.stringify(history.slice(0,20)));renderHistory();alert('Estimate saved on this device.')}
+ catch(e){alert('Could not save history in this browser.')}
+}
+function renderHistory(){
+ const list=$('historyList'), history=getHistory(); list.replaceChildren();
+ if(!history.length){const p=document.createElement('p');p.className='hint';p.textContent='No saved estimates yet. Calculate a session and tap Save estimate.';list.appendChild(p);return;}
+ history.forEach(item=>{
+  const row=document.createElement('div');row.className='history-item';
+  const left=document.createElement('span');left.textContent=item.date+' · '+item.start+'% → '+item.target+'%';
+  const right=document.createElement('strong');right.textContent='₹'+Number(item.cost).toFixed(2);
+  row.append(left,right);list.appendChild(row);
+ });
+}
+$('calculate').addEventListener('click',compute);
+const save=document.createElement('button');save.type='button';save.textContent='Save estimate';save.className='secondary';save.style.marginTop='10px';save.addEventListener('click',saveEstimate);
+$('calculator').querySelector('.card').appendChild(save);
+$('tabCalc').addEventListener('click',()=>{$('calculator').classList.remove('hidden');$('historySection').classList.add('hidden');$('tabCalc').classList.add('active');$('tabHistory').classList.remove('active');$('tabHistory').classList.add('secondary');$('tabCalc').classList.remove('secondary')});
+$('tabHistory').addEventListener('click',()=>{$('calculator').classList.add('hidden');$('historySection').classList.remove('hidden');$('tabHistory').classList.add('active');$('tabHistory').classList.remove('secondary');$('tabCalc').classList.remove('active');$('tabCalc').classList.add('secondary');renderHistory()});
+$('clearHistory').addEventListener('click',()=>{if(confirm('Clear all saved estimates?')){localStorage.removeItem('evcm-history');renderHistory()}});
+compute();
+</script>
+</body>
+</html>
